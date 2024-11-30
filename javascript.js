@@ -104,8 +104,12 @@ function createPlane(dimensions, position, rotation, color) {
     return objectElement;
 }
 
-const cameraPosition = new Point3D(0, 400, 0);
-initScene(300, cameraPosition);
+function createScene() {
+    const cameraPosition = new Point3D(0, 400, 0);
+    initScene(300, cameraPosition);
 
-backWall = createPlane([150, 150], new Point3D(-75, 0, -75), [0, 0], "red");
-floor = createPlane([150, 150], new Point3D(0, 75, -75), [90, 0], "blue");
+    backWall = createPlane([150, 150], new Point3D(-75, 0, -75), [0, 0], "red");
+    floor = createPlane([150, 150], new Point3D(0, 75, -75), [90, 0], "blue");
+}
+
+document.onload = screateScene;
