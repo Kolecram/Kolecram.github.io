@@ -65,7 +65,7 @@ function initScene(sizeInPixels, cameraPosition) {
     urElement.innerHTML = "upper right: " + new Point3D(viewSquareWidth, 0, viewSquareWidth).toString();
     document.body.appendChild(urElement);
     cpElement = document.createElement("div");
-    cpElement.innerHTML = "camera position: " + new Point3D(viewSquareWidth, 0, viewSquareWidth).toString();
+    cpElement.innerHTML = "camera position: " + cameraPosition.toString();
     document.body.appendChild(cpElement);
 }
 
