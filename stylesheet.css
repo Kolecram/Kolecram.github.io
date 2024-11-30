@@ -1,0 +1,9 @@
+#scene {
+    border: solid;
+    border-width: 1px;
+}
+
+.plane {
+    backface-visibility: hidden;
+    position: absolute;
+}
