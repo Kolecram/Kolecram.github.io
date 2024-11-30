@@ -49,7 +49,7 @@ function initScene(sizeInPixels, cameraPosition) {
        When we would draw a line through the middle of this square, parallel to the y-axis, it would
        go through the camera position. */
 
-    const viewSquareRadius = Math.tan(angleOfView / 2) * cameraPosition[1];
+    const viewSquareRadius = Math.tan(angleOfView / 2) * cameraPosition.y;
     viewSquareWidth = (2 * viewSquareRadius) / Math.sqrt(2);
 
     /* We calculate the number of pixels that corresponds to the view square. */
