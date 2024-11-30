@@ -88,8 +88,8 @@ function createPlane(dimensions, position, rotation, color) {
 
     let objectElement = document.createElement("div");
     objectElement.setAttribute("class", "plane");
-    objectElement.setAttribute("width", dimensions[0]);
-    objectElement.setAttribute("height", dimensions[1]);
+    objectElement.setAttribute("width", dimensions[0] + "px");
+    objectElement.setAttribute("height", dimensions[1] + "px");
     objectElement.setAttribute("x", pixelPoint.x + "px");
     objectElement.setAttribute("y", pixelPoint.y + "px");
     objectElement.style.background = color;
