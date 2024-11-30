@@ -28,13 +28,8 @@ class Point3D {
     }
 }
 
-class PixelPoint3D extends Point3D {
-    constructor(x, y, z) {
-        super(x, y, z);
-    }
-}
-
 function initScene(sizeInPixels, cameraPosition) {
+    console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
     sceneElement = document.createElement("div");
     sceneElement.id = "scene";
     sceneElement.style.width = sizeInPixels;
