@@ -32,11 +32,11 @@ function initScene(sizeInPixels, cameraPosition) {
     console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
     sceneElement = document.createElement("div");
     sceneElement.id = "scene";
-    sceneElement.style.width = sizeInPixels + "px";
-    sceneElement.style.height = sizeInPixels + "px";
+    sceneElement.style.width = sizeInPixels;
+    sceneElement.style.height = sizeInPixels;
     document.body.appendChild(sceneElement);
 
-    sceneWidthInPixels = sceneElement.clientWidth;
+    sceneWidthInPixels = sizeInPixels;
 
     const angleOfView = 1; // normal field of view in radians
 
@@ -56,7 +56,7 @@ function initScene(sizeInPixels, cameraPosition) {
     nrOfPixelsInCm = sceneWidthInPixels / viewSquareWidth;
 
     /* TODO: set perspective-origin */
-    sceneElement.setAttribute("style", "perspective: " + nrOfPixels(cameraPosition.y) + "px");
+    sceneElement.style.perspective = nrOfPixels(cameraPosition.y) + "px";
 
     llElement = document.createElement("div");
     llElement.innerHTML = "lower left: " + new Point3D(-viewSquareWidth, 0, -viewSquareWidth).toString();
