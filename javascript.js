@@ -24,7 +24,7 @@ class Point3D {
         this.z = z;
     }
     toString() {
-        return "(" + [x.toFixed(2), y.toFixed(2), z.toFixed(2)].join(", ") + ")";
+        return "(" + [this.x.toFixed(2), this.y.toFixed(2), this.z.toFixed(2)].join(", ") + ")";
     }
 }
 
