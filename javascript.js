@@ -32,8 +32,8 @@ function initScene(sizeInPixels, cameraPosition) {
     console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
     sceneElement = document.createElement("div");
     sceneElement.id = "scene";
-    sceneElement.style.width = sizeInPixels;
-    sceneElement.style.height = sizeInPixels;
+    sceneElement.style.width = sizeInPixels + "px";
+    sceneElement.style.height = sizeInPixels + "px";
     document.body.appendChild(sceneElement);
 
     sceneWidthInPixels = sceneElement.clientWidth;
