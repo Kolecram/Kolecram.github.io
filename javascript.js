@@ -123,9 +123,6 @@ function createRectangle(parentElement, widthAndHeight, position, perpendicularT
     }
     const pixelPoint = getPixelPoint(newPosition);
 
-    console.log("Position: " + position.toString() + " (" + color + ")");
-    console.log("Pixel point: " + pixelPoint.toString() + " (" + color + ")");
-
     let objectElement = document.createElement("div");
     objectElement.setAttribute("class", "rectangle");
     objectElement.style.left = pixelPoint.x;
@@ -158,14 +155,17 @@ function createRectangle(parentElement, widthAndHeight, position, perpendicularT
 
 function changeCameraPosition() {
     const checkedRadio = radioGroup.querySelector(':checked');
-    console.log("checked: " + checkedRadio.value);
     if (checkedRadio.value == "left") {
         sceneElement.style.transform = "rotateY(90deg)";
+    } else if (checkedRadio.value == "front") {
+        sceneElement.style.transform = "rotateY(0deg)";
+    } else if (checkedRadio.value == "right") {
+        sceneElement.style.transform = "rotateY(-90deg)";
     }
 }
 
 function createScene() {
-    const cameraPosition = new Point3D(150, 400, 0);
+    const cameraPosition = new Point3D(0, 500, 0);
     initScene(300, cameraPosition);
 
     const widthAndHeight = new WidthAndHeight(150, 150);
