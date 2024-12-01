@@ -28,6 +28,26 @@ class Point3D {
     }
 }
 
+class Axis {
+    static x = new Axis("x")
+    static y = new Axis("y")
+    static z = new Axis("z")
+
+    constructor(name) {
+        this.name = name
+    }
+}
+
+class WidthAndHeight {
+    width;
+    height;
+
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+    }
+}
+
 function initScene(sizeInPixels, cameraPosition) {
     console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
     sceneElement = document.createElement("div");
@@ -80,24 +100,34 @@ function getPixelPoint(point) {
     return new Point3D(x, y, z);
 }
 
-// Dimensions geven de breedte en lengte aan
-// Position is de positie van het middelpunt
-// Rotation geeft de rotatie om de x-as en om de y-as
-function createPlane(dimensions, position, rotation, color) {
+// Create a rectangle that is perpendicular to one of the axes of the coordinate system
+// widthAndHeight: width and height
+// position: coordinates of vertex that has the lowest values for x, y and z
+// perpendicularToAxes: specifies the axis to which the rectangle is perpendicular
+// color: color of the rectangle
+function createRectangle(widthAndHeight, position, perpendicularToAxis, color) {
     const pixelPoint = getPixelPoint(position);
+
+    console.log("Position: " + position.toString() + " (" + color + ")");
+    console.log("Pixel point: " + pixelPoint.toString() + " (" + color + ")");
 
     let objectElement = document.createElement("div");
     objectElement.setAttribute("class", "plane");
-    objectElement.setAttribute("width", dimensions[0] + "px");
-    objectElement.setAttribute("height", dimensions[1] + "px");
-    objectElement.setAttribute("x", pixelPoint.x + "px");
-    objectElement.setAttribute("y", pixelPoint.y + "px");
+    objectElement.style.left = pixelPoint.x;
+    objectElement.style.top = pixelPoint.y;
+    objectElement.style.width = nrOfPixels(widthAndHeight.width);
+    objectElement.style.height = nrOfPixels(widthAndHeight.height);
     objectElement.style.background = color;
 
     let transform = "translateZ(" + pixelPoint.z + "px)";
-    transform += " rotateX(" + rotation[0] + "deg)";
-    transform += " rotateY(" + rotation[1] + "deg)";
+    if (perpendicularToAxis == Axis.x) {
+        transform += " rotateZ(90deg)";
+    } else if (perpendicularToAxis == Axis.y) {
+    } else if (perpendicularToAxis == Axis.z) {
+        transform += " rotateX(90deg)";
+    }
     objectElement.style.transform = transform;
+    objectElement.style.transformOrigin = "0 0 0";
 
     sceneElement.append(objectElement);
 
@@ -108,8 +138,10 @@ function createScene() {
     const cameraPosition = new Point3D(0, 400, 0);
     initScene(300, cameraPosition);
 
-    backWall = createPlane([150, 150], new Point3D(-75, 0, -75), [0, 0], "red");
-    floor = createPlane([150, 150], new Point3D(0, 75, -75), [90, 0], "blue");
+    backWall = createRectangle(new WidthAndHeight(150, 150), new Point3D(-75, 0, -75), Axis.y, "red");
+    floor = createRectangle(new WidthAndHeight(150, 150), new Point3D(-75, 0, -75), Axis.z, "blue");
 }
 
-document.onload = screateScene;
+window.onload = (event) => {
+    createScene();
+};
