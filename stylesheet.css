@@ -1,9 +1,15 @@
-#scene {
-    position: relative;
+.clippingBox {
+    overflow: clip;
     border: solid;
     border-width: 1px;
 }
 
-.plane {
+.scene {
+    position: relative;    
+    transform-style: preserve-3d;
+}
+
+.rectangle {
     position: absolute;
+    transform-style: preserve-3d;
 }

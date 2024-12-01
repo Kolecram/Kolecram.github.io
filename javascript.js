@@ -50,11 +50,16 @@ class WidthAndHeight {
 
 function initScene(sizeInPixels, cameraPosition) {
     console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
+
+    let clippingBoxElement = document.createElement("div");
+    clippingBoxElement.setAttribute("class", "clippingBox");
+    clippingBoxElement.style.width = sizeInPixels;
+    clippingBoxElement.style.height = sizeInPixels;
+    document.body.appendChild(clippingBoxElement);
+
     sceneElement = document.createElement("div");
-    sceneElement.id = "scene";
-    sceneElement.style.width = sizeInPixels;
-    sceneElement.style.height = sizeInPixels;
-    document.body.appendChild(sceneElement);
+    sceneElement.className = "scene";
+    clippingBoxElement.appendChild(sceneElement);
 
     sceneWidthInPixels = sizeInPixels;
 
@@ -75,8 +80,9 @@ function initScene(sizeInPixels, cameraPosition) {
     /* We calculate the number of pixels that corresponds to the view square. */
     nrOfPixelsInCm = sceneWidthInPixels / viewSquareWidth;
 
-    /* TODO: set perspective-origin */
-    sceneElement.style.perspective = nrOfPixels(cameraPosition.y) + "px";
+    const pixelPoint = getPixelPoint(cameraPosition);
+    sceneElement.style.perspective = pixelPoint.z + "px";
+    sceneElement.style.perspectiveOrigin = pixelPoint.x + "px " + pixelPoint.y + "px";
 
     llElement = document.createElement("div");
     llElement.innerHTML = "lower left: " + new Point3D(-viewSquareWidth, 0, -viewSquareWidth).toString();
@@ -105,23 +111,38 @@ function getPixelPoint(point) {
 // position: coordinates of vertex that has the lowest values for x, y and z
 // perpendicularToAxes: specifies the axis to which the rectangle is perpendicular
 // color: color of the rectangle
-function createRectangle(widthAndHeight, position, perpendicularToAxis, color) {
-    const pixelPoint = getPixelPoint(position);
+function createRectangle(parentElement, widthAndHeight, position, perpendicularToAxis, color, opacity) {
+
+    /* Because the z-coordinate will be multiplied by -1 when mapped to the 2D coordinates,
+       the vertex that has the smallest coordinates after the mapping to 2D will be another
+       vertex, if the rectangle is not perpendicular to the z-axis. */
+    const newPosition = new Point3D(position.x, position.y, position.z);
+    if (perpendicularToAxis != Axis.z) {
+        newPosition.z += widthAndHeight.height;
+    }
+    const pixelPoint = getPixelPoint(newPosition);
 
     console.log("Position: " + position.toString() + " (" + color + ")");
     console.log("Pixel point: " + pixelPoint.toString() + " (" + color + ")");
 
     let objectElement = document.createElement("div");
-    objectElement.setAttribute("class", "plane");
+    objectElement.setAttribute("class", "rectangle");
     objectElement.style.left = pixelPoint.x;
     objectElement.style.top = pixelPoint.y;
     objectElement.style.width = nrOfPixels(widthAndHeight.width);
     objectElement.style.height = nrOfPixels(widthAndHeight.height);
     objectElement.style.background = color;
+    objectElement.style.opacity = opacity;
 
     let transform = "translateZ(" + pixelPoint.z + "px)";
+
+    /* Note that the CSS rotations around the x, y and z-axes are inconsistent with respect to the direction
+       of the rotation:
+       - rotateX uses the left hand rule
+       - rotateY uses the right hand rule
+       - rotateZ uses the left hand rule */
     if (perpendicularToAxis == Axis.x) {
-        transform += " rotateZ(90deg)";
+        transform += " rotateY(-90deg)";
     } else if (perpendicularToAxis == Axis.y) {
     } else if (perpendicularToAxis == Axis.z) {
         transform += " rotateX(90deg)";
@@ -129,17 +150,22 @@ function createRectangle(widthAndHeight, position, perpendicularToAxis, color) {
     objectElement.style.transform = transform;
     objectElement.style.transformOrigin = "0 0 0";
 
-    sceneElement.append(objectElement);
+    parentElement.append(objectElement);
 
     return objectElement;
 }
 
 function createScene() {
-    const cameraPosition = new Point3D(0, 400, 0);
+    const cameraPosition = new Point3D(150, 400, 0);
     initScene(300, cameraPosition);
 
-    backWall = createRectangle(new WidthAndHeight(150, 150), new Point3D(-75, 0, -75), Axis.y, "red");
-    floor = createRectangle(new WidthAndHeight(150, 150), new Point3D(-75, 0, -75), Axis.z, "blue");
+    const widthAndHeight = new WidthAndHeight(150, 150);
+    leftWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.x, "green", 1);
+    rightWall = createRectangle(sceneElement, widthAndHeight, new Point3D(75, 0, -75), Axis.x, "yellow", 1);
+    backWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.y, "red", 1);
+    ceiling = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, 75), Axis.z, "purple", 1);
+    floor = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.z, "blue"), 1;
+    frontWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 150, -75), Axis.y, "orange", 0.5);
 }
 
 window.onload = (event) => {
