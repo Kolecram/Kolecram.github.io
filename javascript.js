@@ -13,7 +13,15 @@ let sceneElement;
 let sceneWidthInPixels;
 let nrOfPixelsInCm;
 let viewSquareWidth;
-let radioGroup;
+let camHorAngleRadioElement;
+let camVertAngleRadioElement;
+let camPanRadioElement;
+let camZoomRadioElement;
+
+// Angle between the center line of the camera and the z=0 plane (in degrees)
+let cameraAngleHorizontal;
+// Angle between the center line of the camera and the x=0 plane (in degrees)
+let cameraAngleVertical;
 
 class Point3D {
     x;
@@ -49,10 +57,47 @@ class WidthAndHeight {
     }
 }
 
+function createCamControlDiv(controlName, values, initialValue, selectionHandler) {
+    const divElement = document.createElement("div");
+    divElement.setAttribute("class", "controlDiv");
+    divElement.innerHTML = controlName + ": ";
+    document.body.appendChild(divElement);
+    
+    for (let value of values) {
+        const inputElement = document.createElement("input");
+        inputElement.setAttribute("type", "radio");
+        inputElement.setAttribute("id", controlName + value);
+        inputElement.setAttribute("name", "control" + controlName);
+        inputElement.setAttribute("value", value);
+        if (value === initialValue) {
+            inputElement.setAttribute("checked", "true");
+        }
+        divElement.appendChild(inputElement);
+    
+        const labelElement = document.createElement("label");
+        labelElement.setAttribute("for", controlName + value);
+        labelElement.innerHTML = value;
+        divElement.appendChild(labelElement);
+    }
+
+    divElement.addEventListener('change', () => {
+        const checkedRadioButton = divElement.querySelector(':checked');
+        selectionHandler(checkedRadioButton.value);
+    });
+
+    return divElement;
+}
+
 function initScene(sizeInPixels, cameraPosition) {
     console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
 
-    let clippingBoxElement = document.createElement("div");
+    createCamControlDiv("horizontalAngle", ["-135", "-90", "-45", "0", "45", "90", "135"], "0", (value) => { sceneElement.style.transform = "rotateY(" + value + "deg)" });
+    createCamControlDiv("verticalAngle", ["-90", "-45", "0", "45", "90"], "0", (value) => { sceneElement.style.transform = "rotateX(" + -value + "deg)" });
+    createCamControlDiv("horizontalPan", ["-100", "0", "100"], "0", (value) => { sceneElement.style.transform = "translateX(" + nrOfPixels(-value) + "px)" });
+    createCamControlDiv("verticalPan", ["-100", "0", "100"], "0", (value) => { sceneElement.style.transform = "translateY(" + nrOfPixels(-value) + "px)" });
+    createCamControlDiv("depthPan", ["-100", "0", "100"], "0", (value) => { sceneElement.style.transform = "translateZ(" + nrOfPixels(-value) + "px)" });
+
+    const clippingBoxElement = document.createElement("div");
     clippingBoxElement.setAttribute("class", "clippingBox");
     clippingBoxElement.style.width = sizeInPixels;
     clippingBoxElement.style.height = sizeInPixels;
@@ -60,6 +105,8 @@ function initScene(sizeInPixels, cameraPosition) {
 
     sceneElement = document.createElement("div");
     sceneElement.className = "scene";
+    sceneElement.style.width = sizeInPixels;
+    sceneElement.style.height = sizeInPixels;
     clippingBoxElement.appendChild(sceneElement);
 
     sceneWidthInPixels = sizeInPixels;
@@ -153,31 +200,16 @@ function createRectangle(parentElement, widthAndHeight, position, perpendicularT
     return objectElement;
 }
 
-function changeCameraPosition() {
-    const checkedRadio = radioGroup.querySelector(':checked');
-    if (checkedRadio.value == "left") {
-        sceneElement.style.transform = "rotateY(90deg)";
-    } else if (checkedRadio.value == "front") {
-        sceneElement.style.transform = "rotateY(0deg)";
-    } else if (checkedRadio.value == "right") {
-        sceneElement.style.transform = "rotateY(-90deg)";
-    }
-}
-
 function createScene() {
     const cameraPosition = new Point3D(0, 500, 0);
     initScene(300, cameraPosition);
 
     const widthAndHeight = new WidthAndHeight(150, 150);
-    leftWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.x, "green", 1);
-    rightWall = createRectangle(sceneElement, widthAndHeight, new Point3D(75, 0, -75), Axis.x, "yellow", 1);
-    backWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.y, "red", 1);
-    ceiling = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, 75), Axis.z, "purple", 1);
-    floor = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.z, "blue"), 1;
-    frontWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 150, -75), Axis.y, "orange", 0.5);
-
-    radioGroup = document.querySelector('#cameraPositionRadioButtons');
-    radioGroup.addEventListener('change', changeCameraPosition);
+    const leftWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.x, "green", 1);
+    const rightWall = createRectangle(sceneElement, widthAndHeight, new Point3D(75, 0, -75), Axis.x, "yellow", 1);
+    const backWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.y, "red", 1);
+    const ceiling = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, 75), Axis.z, "purple", 1);
+    const floor = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.z, "blue", 1);
 }
 
 window.onload = (event) => {
