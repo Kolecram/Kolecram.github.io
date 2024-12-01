@@ -13,6 +13,7 @@ let sceneElement;
 let sceneWidthInPixels;
 let nrOfPixelsInCm;
 let viewSquareWidth;
+let radioGroup;
 
 class Point3D {
     x;
@@ -81,8 +82,8 @@ function initScene(sizeInPixels, cameraPosition) {
     nrOfPixelsInCm = sceneWidthInPixels / viewSquareWidth;
 
     const pixelPoint = getPixelPoint(cameraPosition);
-    sceneElement.style.perspective = pixelPoint.z + "px";
-    sceneElement.style.perspectiveOrigin = pixelPoint.x + "px " + pixelPoint.y + "px";
+    clippingBoxElement.style.perspective = pixelPoint.z + "px";
+    clippingBoxElement.style.perspectiveOrigin = pixelPoint.x + "px " + pixelPoint.y + "px";
 
     llElement = document.createElement("div");
     llElement.innerHTML = "lower left: " + new Point3D(-viewSquareWidth, 0, -viewSquareWidth).toString();
@@ -155,6 +156,14 @@ function createRectangle(parentElement, widthAndHeight, position, perpendicularT
     return objectElement;
 }
 
+function changeCameraPosition() {
+    const checkedRadio = radioGroup.querySelector(':checked');
+    console.log("checked: " + checkedRadio.value);
+    if (checkedRadio.value == "left") {
+        sceneElement.style.transform = "rotateY(90deg)";
+    }
+}
+
 function createScene() {
     const cameraPosition = new Point3D(150, 400, 0);
     initScene(300, cameraPosition);
@@ -166,6 +175,9 @@ function createScene() {
     ceiling = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, 75), Axis.z, "purple", 1);
     floor = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 0, -75), Axis.z, "blue"), 1;
     frontWall = createRectangle(sceneElement, widthAndHeight, new Point3D(-75, 150, -75), Axis.y, "orange", 0.5);
+
+    radioGroup = document.querySelector('#cameraPositionRadioButtons');
+    radioGroup.addEventListener('change', changeCameraPosition);
 }
 
 window.onload = (event) => {

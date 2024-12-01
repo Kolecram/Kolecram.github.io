@@ -5,11 +5,16 @@
 }
 
 .scene {
-    position: relative;    
+    position: relative;
     transform-style: preserve-3d;
+    transition: transform 1s;
 }
 
 .rectangle {
     position: absolute;
     transform-style: preserve-3d;
+}
+
+label {
+    margin-right: 10px;
 }
