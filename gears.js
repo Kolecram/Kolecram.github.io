@@ -1,12 +1,18 @@
 const svgNamespace = "http://www.w3.org/2000/svg";
 
-const pressureAngle = 20;
-let svgElement;
+const pressureAngle = 20; // in degrees
 
-function getInvoluteCoordinates(radius, angle) {
-    const x = radius * (Math.cos(angle) + angle * Math.sin(angle));
-    const y = radius * (Math.sin(angle) - angle * Math.cos(angle));
-    return [x, y];
+function getInvoluteCoordinates(radius, angle, angle2, inverse) {
+    if (inverse) {
+        angle = Math.PI / 2;
+        const x = radius * (Math.sin(angle + angle2) - angle * Math.cos(angle + angle2));
+        const y = radius * (Math.cos(angle + angle2) + angle * Math.sin(angle + angle2));
+        return [x, y];
+    } else {
+        const x = radius * (Math.cos(angle + angle2) + angle * Math.sin(angle + angle2));
+        const y = radius * (Math.sin(angle + angle2) - angle * Math.cos(angle + angle2));
+        return [x, y];
+    }
 }
 
 function getInvoluteIntersectAngle(baseRadius, otherRadius) {
@@ -17,7 +23,7 @@ function getInvoluteIntersectAngle(baseRadius, otherRadius) {
     ready = false;
     while (!ready) {
         angle = (minAngle + maxAngle) / 2;
-        [x, y] = getInvoluteCoordinates(baseRadius, angle);
+        [x, y] = getInvoluteCoordinates(baseRadius, angle, 0, false);
         // Calculate distance from point on involute to the circle with radius otherRadius
         const distance = otherRadius - Math.sqrt(x ** 2 + y ** 2);
         const maxDistance = otherRadius * 0.01;
@@ -30,18 +36,23 @@ function getInvoluteIntersectAngle(baseRadius, otherRadius) {
         }
     }
     console.log("x, y: " + [x, y].join(", "));
-    return [angle, Math.atan(y/x)];
+    return [angle, Math.atan(y / x)];
 }
 
 function rotate([x, y], angle) {
     return [Math.cos(angle) * x - Math.sin(angle) * y, Math.sin(angle) * x + Math.cos(angle) * y];
 }
 
-function createGear() {
-    svgElement = document.querySelector("svg");
+function createGear(nrOfTeeth, referenceRadiusInPixels, centerX, centerY, rotationAngle) {
+    let svgElement = document.createElementNS(svgNamespace, "svg");
+    svgElement.setAttribute("width", referenceRadiusInPixels * 2);
+    svgElement.setAttribute("height", referenceRadiusInPixels * 2);
+    svgElement.setAttribute("x", centerX);
+    svgElement.setAttribute("y", centerY);
+    svgElement.setAttribute("viewBox", "-100 -100 200 200");
+    svgElement.style.overflow = "visible";
 
-    const referenceRadius = 80;
-    const nrOfTeeth = 22;
+    const referenceRadius = 100;
 
     const module = referenceRadius * 2 / nrOfTeeth;
     const baseRadius = referenceRadius * Math.cos(pressureAngle * Math.PI / 180);
@@ -51,37 +62,38 @@ function createGear() {
     const [tipIntersectAngle1, tipIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, tipRadius);
     const [refIntersectAngle1, refIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, referenceRadius);
 
+    const anglePerTooth = 2 * Math.PI / nrOfTeeth;
+    const tipArcAngle = anglePerTooth / 2 - 2 * (tipIntersectAngle2 - refIntersectAngle2);
+    const rootArcAngle = anglePerTooth / 2 - 2 * refIntersectAngle2;
+
+    let angle = -Math.PI / 2;
     let pathElement = document.createElementNS(svgNamespace, "path");
-    let path = "M " + baseRadius + " 0";
-    let angle = 0;
+    let path = "M 0 " + -rootRadius;
+
     for (i = 0; i < nrOfTeeth; i++) {
+        angle += rootArcAngle / 2;
+        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle) + " ";
+
         const nrOfSteps = 10;
         const stepAngle = tipIntersectAngle1 / nrOfSteps;
-        for (let step = 1; step <= nrOfSteps; step++) {
-            [x, y] = getInvoluteCoordinates(baseRadius, step * stepAngle);
-            [x, y] = rotate([x, y], angle);
-            const radius = Math.sqrt(x ** 2 + y ** 2);
+        for (let step = 0; step <= nrOfSteps; step++) {
+            [x, y] = getInvoluteCoordinates(baseRadius, step * stepAngle, angle, false);
             path += " L " + x + " " + y;
         }
         angle += tipIntersectAngle2;
-        const tipArcAngle = Math.PI / nrOfTeeth - 2 * tipIntersectAngle2;
-        console.log("tipArcAngle: " + tipArcAngle);
         angle += tipArcAngle;
         path += " A " + tipRadius + " " + tipRadius + " 0 0 1 " + tipRadius * Math.cos(angle) + " " + tipRadius * Math.sin(angle);
         angle += tipIntersectAngle2;
         for (let step = nrOfSteps; step >= 0; step--) {
-            let [x, y] = getInvoluteCoordinates(baseRadius, stepAngle * step);
-            y = -y;
-            [x, y] = rotate([x, y], angle);
-            const radius = Math.sqrt(x ** 2 + y ** 2);
+            let [x, y] = getInvoluteCoordinates(baseRadius, step * stepAngle, angle, true);
             path += " L " + x + " " + y;
         }
-        const baseArcAngle = Math.PI / nrOfTeeth;
-        console.log("baseArcAngle: " + baseArcAngle);
-        angle += baseArcAngle;
-        path += " A " + baseRadius + " " + baseRadius + " 0 0 1 " + baseRadius * Math.cos(angle) + " " + baseRadius * Math.sin(angle) + " ";
+        path += " L " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle);
+        angle += rootArcAngle / 2;
+        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle) + " ";
     }
     pathElement.setAttribute("d", path);
+    pathElement.style.transform = "rotate(" + rotationAngle + "deg)";
     svgElement.appendChild(pathElement);
 
     let refCircle = document.createElementNS(svgNamespace, "circle");
@@ -103,8 +115,12 @@ function createGear() {
     rootCircle.setAttribute("class", "rootCircle");
     rootCircle.setAttribute("r", rootRadius);
     svgElement.appendChild(rootCircle);
+
+    return svgElement;
 }
 
 window.onload = (event) => {
-    createGear();
-};
+    let svgElement = document.querySelector("svg");
+    svgElement.appendChild(createGear(22, 80, -160, -80, 0));
+    svgElement.appendChild(createGear(22, 80, 0, -80, 360 / 22 / 2));
+}
