@@ -42,24 +42,24 @@ function rotate([x, y], angle) {
     return [Math.cos(angle) * x - Math.sin(angle) * y, Math.sin(angle) * x + Math.cos(angle) * y];
 }
 
-function createGear(nrOfTeeth, referenceRadiusInPixels, centerX, centerY, rotationAngle) {
+function createGear(nrOfTeeth, module, centerX, centerY, rotationAngle) {
+    const pitchDiameter = nrOfTeeth * module;
+    const pitchRadius = pitchDiameter / 2;
+
     let svgElement = document.createElementNS(svgNamespace, "svg");
-    svgElement.setAttribute("width", referenceRadiusInPixels * 2);
-    svgElement.setAttribute("height", referenceRadiusInPixels * 2);
-    svgElement.setAttribute("x", centerX);
-    svgElement.setAttribute("y", centerY);
-    svgElement.setAttribute("viewBox", "-100 -100 200 200");
+    svgElement.setAttribute("width", pitchRadius * 2);
+    svgElement.setAttribute("height", pitchRadius * 2);
+    svgElement.setAttribute("x", centerX - pitchRadius);
+    svgElement.setAttribute("y", centerY - pitchRadius);
+    svgElement.setAttribute("viewBox", [-pitchRadius, -pitchRadius, pitchDiameter, pitchDiameter].join(" "));
     svgElement.style.overflow = "visible";
 
-    const referenceRadius = 100;
-
-    const module = referenceRadius * 2 / nrOfTeeth;
-    const baseRadius = referenceRadius * Math.cos(pressureAngle * Math.PI / 180);
-    const tipRadius = referenceRadius + module;
-    const rootRadius = referenceRadius - 1.25 * module;
+    const baseRadius = pitchRadius * Math.cos(pressureAngle * Math.PI / 180);
+    const tipRadius = pitchRadius + module;
+    const rootRadius = pitchRadius - 1.25 * module;
 
     const [tipIntersectAngle1, tipIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, tipRadius);
-    const [refIntersectAngle1, refIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, referenceRadius);
+    const [refIntersectAngle1, refIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, pitchRadius);
 
     const anglePerTooth = 2 * Math.PI / nrOfTeeth;
     const tipArcAngle = anglePerTooth / 2 - 2 * (tipIntersectAngle2 - refIntersectAngle2);
@@ -97,7 +97,7 @@ function createGear(nrOfTeeth, referenceRadiusInPixels, centerX, centerY, rotati
 
     let refCircle = document.createElementNS(svgNamespace, "circle");
     refCircle.setAttribute("class", "refCircle");
-    refCircle.setAttribute("r", referenceRadius);
+    refCircle.setAttribute("r", pitchRadius);
     svgElement.appendChild(refCircle);
 
     let baseCircle = document.createElementNS(svgNamespace, "circle");
@@ -118,22 +118,42 @@ function createGear(nrOfTeeth, referenceRadiusInPixels, centerX, centerY, rotati
     return svgElement;
 }
 
+function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, rpm) {
+    const groupElement = document.createElementNS(svgNamespace, "g");
+    groupElement.setAttribute("transform-origin", centerX + " " + centerY);
+
+    const gearElement = createGear(nrOfTeeth, module, centerX, centerY, initialAngle);
+    groupElement.appendChild(gearElement);
+
+    const animationElement = document.createElementNS(svgNamespace, "animateTransform");
+    animationElement.setAttribute("attributeName", "transform");
+    animationElement.setAttribute("type", "rotate");
+    animationElement.setAttribute("begin", "0");
+    animationElement.setAttribute("from", "0");
+    animationElement.setAttribute("to", rpm * 360);
+    animationElement.setAttribute("dur", "60s");
+    animationElement.setAttribute("repeatCount", "indefinite");
+    // groupElement.appendChild(animationElement);
+
+    return groupElement;
+}
+
 window.onload = (event) => {
     let svgElement = document.querySelector("svg");
-    const nrOfTeeth = 22;
 
-    let gearElement = createGear(nrOfTeeth, 80, -160, -80, 0);
-    animationElement = document.createElementNS(svgNamespace, "animateTransform");
-    animationElement.setAttribute("attributeName", "transform");
-    animationElement.setAttribute("attributeType", "XML");
-    animationElement.setAttribute("type", "rotate");
-    animationElement.setAttribute("from", "0");
-    animationElement.setAttribute("to", "360");
-    animationElement.setAttribute("dur", "10s");
-    animationElement.setAttribute("repeatCount", "indefinite");
-    gearElement.appendChild(animationElement);
-    svgElement.appendChild(gearElement);
+    const nrOfTeethGear1 = 22;
+    const module = 10;
 
-    gearElement = createGear(nrOfTeeth, 80, 0, -80, 360 / nrOfTeeth / 2);
-    svgElement.appendChild(gearElement);
+    const rpm1 = 1;
+    const pitchRadiusGear1 = module * nrOfTeethGear1 / 2;
+
+    let gear1Element = createRotatingGear(nrOfTeethGear1, module, -pitchRadiusGear1, 0, 0, rpm1);
+    svgElement.appendChild(gear1Element);
+
+    const nrOfTeethGear2 = 44;
+    const rpm2 = -nrOfTeethGear1 / nrOfTeethGear2 * rpm1;
+    const pitchRadiusGear2 = module * nrOfTeethGear2 / 2;
+
+    let gear2Element = createRotatingGear(nrOfTeethGear2, module, pitchRadiusGear2, 0, 360 / nrOfTeethGear2 / 2, rpm2);
+    svgElement.appendChild(gear2Element);
 }
