@@ -133,7 +133,7 @@ function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, r
     animationElement.setAttribute("to", rpm * 360);
     animationElement.setAttribute("dur", "60s");
     animationElement.setAttribute("repeatCount", "indefinite");
-    // groupElement.appendChild(animationElement);
+    groupElement.appendChild(animationElement);
 
     return groupElement;
 }
@@ -154,6 +154,6 @@ window.onload = (event) => {
     const rpm2 = -nrOfTeethGear1 / nrOfTeethGear2 * rpm1;
     const pitchRadiusGear2 = module * nrOfTeethGear2 / 2;
 
-    let gear2Element = createRotatingGear(nrOfTeethGear2, module, pitchRadiusGear2, 0, 360 / nrOfTeethGear2 / 2, rpm2);
+    let gear2Element = createRotatingGear(nrOfTeethGear2, module, pitchRadiusGear2, 0, 180 + 360 / nrOfTeethGear2 / 2, rpm2);
     svgElement.appendChild(gear2Element);
 }
