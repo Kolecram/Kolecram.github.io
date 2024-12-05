@@ -4,10 +4,9 @@ const pressureAngle = 20; // in degrees
 
 function getInvoluteCoordinates(radius, angle, angle2, inverse) {
     if (inverse) {
-        angle = Math.PI / 2;
-        const x = radius * (Math.sin(angle + angle2) - angle * Math.cos(angle + angle2));
-        const y = radius * (Math.cos(angle + angle2) + angle * Math.sin(angle + angle2));
-        return [x, y];
+        const x = radius * (Math.cos(angle - angle2) + angle * Math.sin(angle - angle2));
+        const y = radius * (Math.sin(angle - angle2) - angle * Math.cos(angle - angle2));
+        return [x, -y];
     } else {
         const x = radius * (Math.cos(angle + angle2) + angle * Math.sin(angle + angle2));
         const y = radius * (Math.sin(angle + angle2) - angle * Math.cos(angle + angle2));
@@ -26,7 +25,7 @@ function getInvoluteIntersectAngle(baseRadius, otherRadius) {
         [x, y] = getInvoluteCoordinates(baseRadius, angle, 0, false);
         // Calculate distance from point on involute to the circle with radius otherRadius
         const distance = otherRadius - Math.sqrt(x ** 2 + y ** 2);
-        const maxDistance = otherRadius * 0.01;
+        const maxDistance = otherRadius * 0.0001;
         if (distance > 0 && distance > maxDistance) {
             minAngle = angle;
         } else if (distance < 0 && -distance > maxDistance) {
@@ -121,6 +120,20 @@ function createGear(nrOfTeeth, referenceRadiusInPixels, centerX, centerY, rotati
 
 window.onload = (event) => {
     let svgElement = document.querySelector("svg");
-    svgElement.appendChild(createGear(22, 80, -160, -80, 0));
-    svgElement.appendChild(createGear(22, 80, 0, -80, 360 / 22 / 2));
+    const nrOfTeeth = 22;
+
+    let gearElement = createGear(nrOfTeeth, 80, -160, -80, 0);
+    animationElement = document.createElementNS(svgNamespace, "animateTransform");
+    animationElement.setAttribute("attributeName", "transform");
+    animationElement.setAttribute("attributeType", "XML");
+    animationElement.setAttribute("type", "rotate");
+    animationElement.setAttribute("from", "0");
+    animationElement.setAttribute("to", "360");
+    animationElement.setAttribute("dur", "10s");
+    animationElement.setAttribute("repeatCount", "indefinite");
+    gearElement.appendChild(animationElement);
+    svgElement.appendChild(gearElement);
+
+    gearElement = createGear(nrOfTeeth, 80, 0, -80, 360 / nrOfTeeth / 2);
+    svgElement.appendChild(gearElement);
 }
