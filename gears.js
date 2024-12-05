@@ -34,7 +34,6 @@ function getInvoluteIntersectAngle(baseRadius, otherRadius) {
             ready = true;
         }
     }
-    console.log("x, y: " + [x, y].join(", "));
     return [angle, Math.atan(y / x)];
 }
 
@@ -42,7 +41,7 @@ function rotate([x, y], angle) {
     return [Math.cos(angle) * x - Math.sin(angle) * y, Math.sin(angle) * x + Math.cos(angle) * y];
 }
 
-function createGear(nrOfTeeth, module, centerX, centerY, rotationAngle) {
+function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace) {
     const pitchDiameter = nrOfTeeth * module;
     const pitchRadius = pitchDiameter / 2;
 
@@ -54,6 +53,8 @@ function createGear(nrOfTeeth, module, centerX, centerY, rotationAngle) {
     svgElement.setAttribute("viewBox", [-pitchRadius, -pitchRadius, pitchDiameter, pitchDiameter].join(" "));
     svgElement.style.overflow = "visible";
 
+    const anglePerToothHalf = Math.PI / nrOfTeeth;
+
     const baseRadius = pitchRadius * Math.cos(pressureAngle * Math.PI / 180);
     const tipRadius = pitchRadius + module;
     const rootRadius = pitchRadius - 1.25 * module;
@@ -61,38 +62,58 @@ function createGear(nrOfTeeth, module, centerX, centerY, rotationAngle) {
     const [tipIntersectAngle1, tipIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, tipRadius);
     const [refIntersectAngle1, refIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, pitchRadius);
 
-    const anglePerTooth = 2 * Math.PI / nrOfTeeth;
-    const tipArcAngle = anglePerTooth / 2 - 2 * (tipIntersectAngle2 - refIntersectAngle2);
-    const rootArcAngle = anglePerTooth / 2 - 2 * refIntersectAngle2;
+    let rootArcAngle;
+    let involuteAngleOffset1, involuteAngleOffset2;
 
-    let angle = -Math.PI / 2;
+    if (rootRadius > baseRadius) {
+        const [rootIntersectAngle1, rootIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, rootRadius);
+        rootArcAngle = anglePerToothHalf - 2 * (refIntersectAngle2 - rootIntersectAngle2);
+        involuteAngleOffset1 = rootIntersectAngle1;
+        involuteAngleOffset2 = rootIntersectAngle2;
+    } else {
+        rootArcAngle = anglePerToothHalf - 2 * refIntersectAngle2;
+        involuteAngleOffset1 = 0;
+        involuteAngleOffset2 = 0;
+    }
+    const tipArcAngle = anglePerToothHalf - 2 * (tipIntersectAngle2 - refIntersectAngle2);
+
+    const nrOfInvolutePoints = 10;
+    const involuteAngleDelta = (tipIntersectAngle1 - involuteAngleOffset1) / nrOfInvolutePoints;
+
+    let angle = startAngle;
+    if (startWithSpace) {
+        angle += anglePerToothHalf;
+    }
+
+    let involuteAngle;
     let pathElement = document.createElementNS(svgNamespace, "path");
-    let path = "M 0 " + -rootRadius;
-
+    let path = "M " + rotate([rootRadius, 0], angle).join(" ");
     for (i = 0; i < nrOfTeeth; i++) {
         angle += rootArcAngle / 2;
-        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle) + " ";
+        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rotate([rootRadius, 0], angle).join(" ");
 
-        const nrOfSteps = 10;
-        const stepAngle = tipIntersectAngle1 / nrOfSteps;
-        for (let step = 0; step <= nrOfSteps; step++) {
-            [x, y] = getInvoluteCoordinates(baseRadius, step * stepAngle, angle, false);
+        involuteAngle = involuteAngleOffset1;
+        for (let point = 0; point <= nrOfInvolutePoints; point++) {
+            [x, y] = getInvoluteCoordinates(baseRadius, involuteAngle, angle - involuteAngleOffset2, false);
             path += " L " + x + " " + y;
+            involuteAngle += involuteAngleDelta;
         }
-        angle += tipIntersectAngle2;
+        angle += tipIntersectAngle2 - involuteAngleOffset2;
         angle += tipArcAngle;
         path += " A " + tipRadius + " " + tipRadius + " 0 0 1 " + tipRadius * Math.cos(angle) + " " + tipRadius * Math.sin(angle);
-        angle += tipIntersectAngle2;
-        for (let step = nrOfSteps; step >= 0; step--) {
-            let [x, y] = getInvoluteCoordinates(baseRadius, step * stepAngle, angle, true);
+
+        angle += tipIntersectAngle2 - involuteAngleOffset2;
+        involuteAngle = tipIntersectAngle1;
+        for (let point = 0; point <= nrOfInvolutePoints; point++) {
+            let [x, y] = getInvoluteCoordinates(baseRadius, involuteAngle, angle + involuteAngleOffset2, true);
             path += " L " + x + " " + y;
+            involuteAngle -= involuteAngleDelta;
         }
         path += " L " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle);
         angle += rootArcAngle / 2;
-        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle) + " ";
+        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rotate([rootRadius, 0], angle).join(" ");
     }
     pathElement.setAttribute("d", path);
-    pathElement.style.transform = "rotate(" + rotationAngle + "deg)";
     svgElement.appendChild(pathElement);
 
     let refCircle = document.createElementNS(svgNamespace, "circle");
@@ -118,11 +139,11 @@ function createGear(nrOfTeeth, module, centerX, centerY, rotationAngle) {
     return svgElement;
 }
 
-function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, rpm) {
+function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace, rpm) {
     const groupElement = document.createElementNS(svgNamespace, "g");
     groupElement.setAttribute("transform-origin", centerX + " " + centerY);
 
-    const gearElement = createGear(nrOfTeeth, module, centerX, centerY, initialAngle);
+    const gearElement = createGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace);
     groupElement.appendChild(gearElement);
 
     const animationElement = document.createElementNS(svgNamespace, "animateTransform");
@@ -142,18 +163,18 @@ window.onload = (event) => {
     let svgElement = document.querySelector("svg");
 
     const nrOfTeethGear1 = 22;
-    const module = 10;
+    const module = 5;
 
     const rpm1 = 1;
     const pitchRadiusGear1 = module * nrOfTeethGear1 / 2;
 
-    let gear1Element = createRotatingGear(nrOfTeethGear1, module, -pitchRadiusGear1, 0, 0, rpm1);
+    let gear1Element = createRotatingGear(nrOfTeethGear1, module, -pitchRadiusGear1, 0, 0, false, rpm1);
     svgElement.appendChild(gear1Element);
 
-    const nrOfTeethGear2 = 44;
+    const nrOfTeethGear2 = 100;
     const rpm2 = -nrOfTeethGear1 / nrOfTeethGear2 * rpm1;
     const pitchRadiusGear2 = module * nrOfTeethGear2 / 2;
 
-    let gear2Element = createRotatingGear(nrOfTeethGear2, module, pitchRadiusGear2, 0, 180 + 360 / nrOfTeethGear2 / 2, rpm2);
+    let gear2Element = createRotatingGear(nrOfTeethGear2, module, pitchRadiusGear2, 0, Math.PI, true, rpm2);
     svgElement.appendChild(gear2Element);
 }
