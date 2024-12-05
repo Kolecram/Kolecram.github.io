@@ -2,14 +2,14 @@ const svgNamespace = "http://www.w3.org/2000/svg";
 
 const pressureAngle = 20; // in degrees
 
-function getInvoluteCoordinates(radius, angle, angle2, inverse) {
-    if (inverse) {
-        const x = radius * (Math.cos(angle - angle2) + angle * Math.sin(angle - angle2));
-        const y = radius * (Math.sin(angle - angle2) - angle * Math.cos(angle - angle2));
+function getInvoluteCoordinates(radius, involuteAngle, offsetAngle, reversed) {
+    if (reversed) {
+        const x = radius * (Math.cos(involuteAngle - offsetAngle) + involuteAngle * Math.sin(involuteAngle - offsetAngle));
+        const y = radius * (Math.sin(involuteAngle - offsetAngle) - involuteAngle * Math.cos(involuteAngle - offsetAngle));
         return [x, -y];
     } else {
-        const x = radius * (Math.cos(angle + angle2) + angle * Math.sin(angle + angle2));
-        const y = radius * (Math.sin(angle + angle2) - angle * Math.cos(angle + angle2));
+        const x = radius * (Math.cos(involuteAngle + offsetAngle) + involuteAngle * Math.sin(involuteAngle + offsetAngle));
+        const y = radius * (Math.sin(involuteAngle + offsetAngle) - involuteAngle * Math.cos(involuteAngle + offsetAngle));
         return [x, y];
     }
 }
@@ -19,7 +19,7 @@ function getInvoluteIntersectAngle(baseRadius, otherRadius) {
     let maxAngle = Math.PI / 2;
     let angle;
     let x, y;
-    ready = false;
+    let ready = false;
     while (!ready) {
         angle = (minAngle + maxAngle) / 2;
         [x, y] = getInvoluteCoordinates(baseRadius, angle, 0, false);
@@ -88,13 +88,13 @@ function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSp
     let involuteAngle;
     let pathElement = document.createElementNS(svgNamespace, "path");
     let path = "M " + rotate([rootRadius, 0], angle).join(" ");
-    for (i = 0; i < nrOfTeeth; i++) {
+    for (let i = 0; i < nrOfTeeth; i++) {
         angle += rootArcAngle / 2;
         path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rotate([rootRadius, 0], angle).join(" ");
 
         involuteAngle = involuteAngleOffset1;
         for (let point = 0; point <= nrOfInvolutePoints; point++) {
-            [x, y] = getInvoluteCoordinates(baseRadius, involuteAngle, angle - involuteAngleOffset2, false);
+            let [x, y] = getInvoluteCoordinates(baseRadius, involuteAngle, angle - involuteAngleOffset2, false);
             path += " L " + x + " " + y;
             involuteAngle += involuteAngleDelta;
         }
@@ -159,22 +159,4 @@ function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, s
     return groupElement;
 }
 
-window.onload = (event) => {
-    let svgElement = document.querySelector("svg");
-
-    const nrOfTeethGear1 = 22;
-    const module = 5;
-
-    const rpm1 = 1;
-    const pitchRadiusGear1 = module * nrOfTeethGear1 / 2;
-
-    let gear1Element = createRotatingGear(nrOfTeethGear1, module, -pitchRadiusGear1, 0, 0, false, rpm1);
-    svgElement.appendChild(gear1Element);
-
-    const nrOfTeethGear2 = 100;
-    const rpm2 = -nrOfTeethGear1 / nrOfTeethGear2 * rpm1;
-    const pitchRadiusGear2 = module * nrOfTeethGear2 / 2;
-
-    let gear2Element = createRotatingGear(nrOfTeethGear2, module, pitchRadiusGear2, 0, Math.PI, true, rpm2);
-    svgElement.appendChild(gear2Element);
-}
+export {createGear, createRotatingGear};
