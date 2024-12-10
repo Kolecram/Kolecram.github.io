@@ -17,6 +17,8 @@ let camHorAngleRadioElement;
 let camVertAngleRadioElement;
 let camPanRadioElement;
 let camZoomRadioElement;
+let camRotations = [0, 0, 0];
+let camTranslations = [0, 0, 0];
 
 // Angle between the center line of the camera and the z=0 plane (in degrees)
 let cameraAngleHorizontal;
@@ -83,19 +85,30 @@ function createCamControlDiv(controlName, values, initialValue, selectionHandler
     divElement.addEventListener('change', () => {
         const checkedRadioButton = divElement.querySelector(':checked');
         selectionHandler(checkedRadioButton.value);
+        updateSceneTransformation();
     });
 
     return divElement;
 }
 
-function initScene(sizeInPixels, cameraPosition) {
-    console.log("Initializing scene with size " + sizeInPixels + " and camera position " + cameraPosition);
+function updateSceneTransformation() {
+    let transformations = [];
+    transformations.push("rotateX(" + -camRotations[0] + "deg)");
+    transformations.push("rotateY(" + -camRotations[2] + "deg)");
+    transformations.push("rotateZ(" + -camRotations[1] + "deg)");
+    transformations.push("translateX(" + -camTranslations[0] + "px)");
+    transformations.push("translateY(" + -camTranslations[2] + "px)");
+    transformations.push("translateZ(" + -camTranslations[1] + "px)");
+    sceneElement.style.transform = transformations.join(" ");
+}
 
-    createCamControlDiv("horizontalAngle", ["-135", "-90", "-45", "0", "45", "90", "135"], "0", (value) => { sceneElement.style.transform = "rotateY(" + value + "deg)" });
-    createCamControlDiv("verticalAngle", ["-90", "-45", "0", "45", "90"], "0", (value) => { sceneElement.style.transform = "rotateX(" + -value + "deg)" });
-    createCamControlDiv("horizontalPan", ["-100", "0", "100"], "0", (value) => { sceneElement.style.transform = "translateX(" + nrOfPixels(-value) + "px)" });
-    createCamControlDiv("verticalPan", ["-100", "0", "100"], "0", (value) => { sceneElement.style.transform = "translateY(" + nrOfPixels(-value) + "px)" });
-    createCamControlDiv("depthPan", ["-100", "0", "100"], "0", (value) => { sceneElement.style.transform = "translateZ(" + nrOfPixels(-value) + "px)" });
+function initScene(sizeInPixels, cameraPosition) {
+    createCamControlDiv("rotateX", ["-135", "-90", "-45", "0", "45", "90", "135"], "0", (value) => { camRotations[0] = value });
+    createCamControlDiv("rotateY", ["-90", "-45", "0", "45", "90"], "0", (value) => { camRotations[1] = value });
+    createCamControlDiv("rotateZ", ["-90", "-45", "0", "45", "90"], "0", (value) => { camRotations[2] = value });
+    createCamControlDiv("translateX", ["-100", "0", "100"], "0", (value) => { camTranslations[0] = value });
+    createCamControlDiv("translateY", ["-100", "0", "100"], "0", (value) => { camTranslations[1] = value });
+    createCamControlDiv("translateZ", ["-100", "0", "100"], "0", (value) => { camTranslations[2] = value });
 
     const clippingBoxElement = document.createElement("div");
     clippingBoxElement.setAttribute("class", "clippingBox");
