@@ -2,27 +2,3 @@ svg {
     border: 1px solid black;
     overflow: clip;
 }
-
-circle {
-    fill: transparent;
-    stroke: black;
-    stroke-width: 0.1;
-}
-
-.baseCircle {
-    stroke: blue;
-}
-
-.tipCircle {
-    stroke: green;
-}
-
-.rootCircle {
-    stroke: red;
-}
-
-path {
-    stroke: black;
-    stroke-width: 0.2;
-    fill: transparent;
-}

@@ -41,7 +41,7 @@ function rotate([x, y], angle) {
     return [Math.cos(angle) * x - Math.sin(angle) * y, Math.sin(angle) * x + Math.cos(angle) * y];
 }
 
-function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace) {
+function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color) {
     const pitchDiameter = nrOfTeeth * module;
     const pitchRadius = pitchDiameter / 2;
 
@@ -114,36 +114,17 @@ function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSp
         path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rotate([rootRadius, 0], angle).join(" ");
     }
     pathElement.setAttribute("d", path);
+    pathElement.setAttribute("style", "fill: " + color);
     svgElement.appendChild(pathElement);
-
-    let refCircle = document.createElementNS(svgNamespace, "circle");
-    refCircle.setAttribute("class", "refCircle");
-    refCircle.setAttribute("r", pitchRadius);
-    svgElement.appendChild(refCircle);
-
-    let baseCircle = document.createElementNS(svgNamespace, "circle");
-    baseCircle.setAttribute("class", "baseCircle");
-    baseCircle.setAttribute("r", baseRadius);
-    svgElement.appendChild(baseCircle);
-
-    let tipCircle = document.createElementNS(svgNamespace, "circle");
-    tipCircle.setAttribute("class", "tipCircle");
-    tipCircle.setAttribute("r", tipRadius);
-    svgElement.appendChild(tipCircle);
-
-    let rootCircle = document.createElementNS(svgNamespace, "circle");
-    rootCircle.setAttribute("class", "rootCircle");
-    rootCircle.setAttribute("r", rootRadius);
-    svgElement.appendChild(rootCircle);
 
     return svgElement;
 }
 
-function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace, rpm) {
+function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace, rpm, color) {
     const groupElement = document.createElementNS(svgNamespace, "g");
     groupElement.setAttribute("transform-origin", centerX + " " + centerY);
 
-    const gearElement = createGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace);
+    const gearElement = createGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace, color);
     groupElement.appendChild(gearElement);
 
     const animationElement = document.createElementNS(svgNamespace, "animateTransform");
