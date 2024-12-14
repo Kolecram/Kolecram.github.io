@@ -2,7 +2,7 @@ const svgNamespace = "http://www.w3.org/2000/svg";
 
 const pressureAngle = 20; // in degrees
 
-const innerGearThicknessPercentage = 10;
+const innerGearThicknessPercentage = 7;
 
 class PathBuilder {
     #pathCommands = [];
