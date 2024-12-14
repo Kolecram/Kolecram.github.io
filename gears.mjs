@@ -2,6 +2,34 @@ const svgNamespace = "http://www.w3.org/2000/svg";
 
 const pressureAngle = 20; // in degrees
 
+class PathBuilder {
+    #pathCommands = [];
+
+    #addCommand(letter, parameters) {
+        this.#pathCommands.push(letter + " " + parameters.join(" "));
+    }
+
+    #formatCoordinates(x, y) {
+        return x + "," + y;
+    }
+    
+    addMoveCommand(position) {
+        this.#addCommand("M", [this.#formatCoordinates(position[0], position[1])]);
+    }
+
+    addLineCommand(position) {
+        this.#addCommand("L", [this.#formatCoordinates(position[0], position[1])]);
+    }
+
+    addArcCommand(rx, ry, xAxisRotation, largeArcFlag, sweepFlag, position) {
+        this.#addCommand("A", [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, this.#formatCoordinates(position[0], position[1])]);
+    }
+
+    build() {
+        return this.#pathCommands.join(" ");
+    }
+}
+
 function getInvoluteCoordinates(radius, involuteAngle, offsetAngle, reversed) {
     if (reversed) {
         const x = radius * (Math.cos(involuteAngle - offsetAngle) + involuteAngle * Math.sin(involuteAngle - offsetAngle));
@@ -41,7 +69,7 @@ function rotate([x, y], angle) {
     return [Math.cos(angle) * x - Math.sin(angle) * y, Math.sin(angle) * x + Math.cos(angle) * y];
 }
 
-function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color) {
+function drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color, innerGear) {
     const pitchDiameter = nrOfTeeth * module;
     const pitchRadius = pitchDiameter / 2;
 
@@ -87,57 +115,53 @@ function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSp
 
     let involuteAngle;
     let pathElement = document.createElementNS(svgNamespace, "path");
-    let path = "M " + rotate([rootRadius, 0], angle).join(" ");
+
+    const pathBuilder = new PathBuilder();
+    pathBuilder.addMoveCommand(rotate([rootRadius, 0], angle));
     for (let i = 0; i < nrOfTeeth; i++) {
         angle += rootArcAngle / 2;
-        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rotate([rootRadius, 0], angle).join(" ");
+        pathBuilder.addArcCommand(rootRadius, rootRadius, 0, 0, 1, rotate([rootRadius, 0], angle));
 
         involuteAngle = involuteAngleOffset1;
         for (let point = 0; point <= nrOfInvolutePoints; point++) {
-            let [x, y] = getInvoluteCoordinates(baseRadius, involuteAngle, angle - involuteAngleOffset2, false);
-            path += " L " + x + " " + y;
+            const coordinates = getInvoluteCoordinates(baseRadius, involuteAngle, angle - involuteAngleOffset2, false);
+            pathBuilder.addLineCommand(coordinates);
             involuteAngle += involuteAngleDelta;
         }
         angle += tipIntersectAngle2 - involuteAngleOffset2;
         angle += tipArcAngle;
-        path += " A " + tipRadius + " " + tipRadius + " 0 0 1 " + tipRadius * Math.cos(angle) + " " + tipRadius * Math.sin(angle);
+        pathBuilder.addArcCommand(tipRadius, tipRadius, 0, 0, 1, [tipRadius * Math.cos(angle), tipRadius * Math.sin(angle)]);
 
         angle += tipIntersectAngle2 - involuteAngleOffset2;
         involuteAngle = tipIntersectAngle1;
         for (let point = 0; point <= nrOfInvolutePoints; point++) {
-            let [x, y] = getInvoluteCoordinates(baseRadius, involuteAngle, angle + involuteAngleOffset2, true);
-            path += " L " + x + " " + y;
+            const coordinates = getInvoluteCoordinates(baseRadius, involuteAngle, angle + involuteAngleOffset2, true);
+            pathBuilder.addLineCommand(coordinates);
             involuteAngle -= involuteAngleDelta;
         }
-        path += " L " + rootRadius * Math.cos(angle) + " " + rootRadius * Math.sin(angle);
+        pathBuilder.addLineCommand([rootRadius * Math.cos(angle), rootRadius * Math.sin(angle)]);
         angle += rootArcAngle / 2;
-        path += " A " + rootRadius + " " + rootRadius + " 0 0 1 " + rotate([rootRadius, 0], angle).join(" ");
+        pathBuilder.addArcCommand(rootRadius, rootRadius, 0, 0, 1, rotate([rootRadius, 0], angle));
     }
-    pathElement.setAttribute("d", path);
-    pathElement.setAttribute("style", "fill: " + color);
+    if (innerGear) {
+        const outerRadius = tipRadius * 1.1;
+        pathBuilder.addMoveCommand([outerRadius, 0]);
+        pathBuilder.addArcCommand(outerRadius, outerRadius, 0, 0, 1, [-outerRadius, 0]);
+        pathBuilder.addArcCommand(outerRadius, outerRadius, 0, 0, 1, [outerRadius, 0]);
+    }
+    pathElement.setAttribute("d", pathBuilder.build());
+    pathElement.setAttribute("style", "fill: " + color + "; fill-rule: evenodd");
     svgElement.appendChild(pathElement);
 
     return svgElement;
 }
 
-function createRotatingGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace, rpm, color) {
-    const groupElement = document.createElementNS(svgNamespace, "g");
-    groupElement.setAttribute("transform-origin", centerX + " " + centerY);
-
-    const gearElement = createGear(nrOfTeeth, module, centerX, centerY, initialAngle, startWithSpace, color);
-    groupElement.appendChild(gearElement);
-
-    const animationElement = document.createElementNS(svgNamespace, "animateTransform");
-    animationElement.setAttribute("attributeName", "transform");
-    animationElement.setAttribute("type", "rotate");
-    animationElement.setAttribute("begin", "0");
-    animationElement.setAttribute("from", "0");
-    animationElement.setAttribute("to", rpm * 360);
-    animationElement.setAttribute("dur", "60s");
-    animationElement.setAttribute("repeatCount", "indefinite");
-    groupElement.appendChild(animationElement);
-
-    return groupElement;
+function createInnerGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color) {
+    return drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color, true);
 }
 
-export {createGear, createRotatingGear};
+function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color) {
+    return drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color, false);
+}
+
+export {createGear, createInnerGear};
