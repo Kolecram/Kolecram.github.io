@@ -2,6 +2,8 @@ const svgNamespace = "http://www.w3.org/2000/svg";
 
 const pressureAngle = 20; // in degrees
 
+const innerGearThicknessPercentage = 10;
+
 class PathBuilder {
     #pathCommands = [];
 
@@ -144,7 +146,7 @@ function drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpac
         pathBuilder.addArcCommand(rootRadius, rootRadius, 0, 0, 1, rotate([rootRadius, 0], angle));
     }
     if (innerGear) {
-        const outerRadius = tipRadius * 1.1;
+        const outerRadius = pitchRadius * (1 + innerGearThicknessPercentage / 100);
         pathBuilder.addMoveCommand([outerRadius, 0]);
         pathBuilder.addArcCommand(outerRadius, outerRadius, 0, 0, 1, [-outerRadius, 0]);
         pathBuilder.addArcCommand(outerRadius, outerRadius, 0, 0, 1, [outerRadius, 0]);
@@ -164,4 +166,4 @@ function createGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSp
     return drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpace, color, false);
 }
 
-export {createGear, createInnerGear};
+export {createGear, createInnerGear, innerGearThicknessPercentage};
