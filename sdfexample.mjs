@@ -15,13 +15,11 @@ function drawImageOnCanvas() {
         alphaMode: 'opaque',
     });
 
-    const uniformBufferSize = 32;
-    const uniformBuffer = device.createBuffer({
-        size: uniformBufferSize,
+    const resolution = new Float32Array([512, 512, 0, 0]);
+    const resolutionBuffer = device.createBuffer({
+        size: resolution.byteLength,
         usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-    const uniformArrayBuffer = new ArrayBuffer(uniformBufferSize);
-    const resolution = new Float32Array(uniformArrayBuffer, 0, 3);
 
     const module = device.createShaderModule({ code: shaderCode });
     const pipeline = device.createRenderPipeline({
@@ -40,19 +38,12 @@ function drawImageOnCanvas() {
     const bindGroup = device.createBindGroup({
         layout: pipeline.getBindGroupLayout(0),
         entries: [
-            { binding: 0, resource: { buffer: uniformBuffer } },
+            { binding: 0, resource: { buffer: resolutionBuffer } },
         ],
     });
 
     function render() {
-        const width = Math.min(device.limits.maxTextureDimension2D, canvas.clientWidth);
-        const height = Math.min(device.limits.maxTextureDimension2D, canvas.clientHeight);
-        canvas.width = width;
-        canvas.height = height;
-
-        resolution[0] = width;
-        resolution[1] = height;
-        device.queue.writeBuffer(uniformBuffer, 0, uniformArrayBuffer);
+        device.queue.writeBuffer(resolutionBuffer, 0, resolution);
 
         const encoder = device.createCommandEncoder();
         const pass = encoder.beginRenderPass({
