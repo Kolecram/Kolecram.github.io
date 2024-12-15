@@ -17,10 +17,13 @@ class Renderer {
     #sampler;
 
     // Pipeline objects
-    #pipeline
-    #bindGroup
-    #screenPipeline
-    #screenBindGroup
+    #pipeline;
+    #bindGroup;
+    #screenPipeline;
+    #screenBindGroup;
+
+    #renderCount = 0;
+    #renderStart = Date.now();
 
     constructor(canvas) {
         this.canvas = canvas;
@@ -30,17 +33,16 @@ class Renderer {
         await this.setupDevice();
         await this.createAssets();
         await this.makePipeline();
-        this.render();
+        requestAnimationFrame(this.render);
     }
 
     async setupDevice() {
         this.adapter = await navigator.gpu.requestAdapter();
         this.device = await this.adapter.requestDevice();
         this.context = this.canvas.getContext("webgpu");
-        this.format = "bgra8unorm";
         this.context.configure({
             device: this.device,
-            format: this.format,
+            format: "bgra8unorm",
             alphaMode: "opaque"
         });
     }
@@ -176,9 +178,7 @@ class Renderer {
         this.sampler = this.device.createSampler(samplerDescriptor);
     }
 
-    render = () => {
-
-        let start = performance.now();
+    render = (start) => {
 
         const commandEncoder = this.device.createCommandEncoder();
 
@@ -208,13 +208,17 @@ class Renderer {
 
         this.device.queue.onSubmittedWorkDone().then(
             () => {
+                this.#renderCount++;
                 const end = performance.now();
                 const performanceLabel = document.getElementById("render-time");
                 performanceLabel.innerText = Math.round(end - start);
+
+                const elapsedSeconds = (Date.now() - this.#renderStart) / 1000;
+                const frameRateLabel = document.getElementById("frame-rate");
+                frameRateLabel.innerText = Math.round(this.#renderCount / elapsedSeconds);
+                requestAnimationFrame(this.render);
             }
         );
-
-        requestAnimationFrame(this.render);
     }
 
 }
