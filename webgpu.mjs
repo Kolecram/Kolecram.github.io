@@ -7,7 +7,7 @@ if (!adapter) {
 }
 const device = await adapter.requestDevice();
 
-const shaderCode = await fetch("shader.wgsl").then( r => r.text() );
+const shaderCode = await fetch("shader.wgsl").then(r => r.text());
 
 function drawImageOnCanvas() {
     const canvas = document.querySelector("canvas");
@@ -92,6 +92,12 @@ fn fragmentMain() -> @location(0) vec4f {
     device.queue.submit([encoder.finish()]);
 }
 
-window.onload = (event) => {
-    drawImageOnCanvas();
+function winLoad(callback) {
+    if (document.readyState === 'complete') {
+        callback();
+    } else {
+        window.addEventListener("load", callback);
+    }
 }
+
+winLoad(drawImageOnCanvas);
