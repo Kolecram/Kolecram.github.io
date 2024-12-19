@@ -86,8 +86,15 @@ function drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpac
     const anglePerToothHalf = Math.PI / nrOfTeeth;
 
     const baseRadius = pitchRadius * Math.cos(pressureAngle * Math.PI / 180);
-    const tipRadius = pitchRadius + module;
-    const rootRadius = pitchRadius - 1.25 * module;
+    let tipRadius;
+    let rootRadius;
+    if (innerGear) {
+        tipRadius = pitchRadius + 1.25 * module;
+        rootRadius = pitchRadius - module;
+    } else {
+        tipRadius = pitchRadius + module;
+        rootRadius = pitchRadius - 1.25 * module;
+    }
 
     const [tipIntersectAngle1, tipIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, tipRadius);
     const [refIntersectAngle1, refIntersectAngle2] = getInvoluteIntersectAngle(baseRadius, pitchRadius);
