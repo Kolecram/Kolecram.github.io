@@ -1,7 +1,7 @@
 import {SvgMathSpace, Vector} from "./svgmathspace.mjs";
 
 window.onload = (event) => {
-    const space = new SvgMathSpace(400, 3);
+    const space = new SvgMathSpace(400, 1);
 
     const angle = Math.PI / 3;
     const p = new Vector(Math.cos(angle), Math.sin(angle));
@@ -26,5 +26,6 @@ window.onload = (event) => {
     // involuteElement.setAttribute("style", "fill: transparent; stroke: black;");
     // svgElement.appendChild(involuteElement);
 
-    space.drawVector(new Vector(0, 0), new Vector(-1, -1), false);
+    space.drawVector(new Vector(0, 0), new Vector(0.95, -0.94), false);
+    space.drawCircle(1);
 }

@@ -1,4 +1,4 @@
-import { createSvgElement } from "./svg.mjs";
+import { createSvgElement, PathBuilder } from "./svg.mjs";
 
 class Vector {
   x;
@@ -17,21 +17,19 @@ class Vector {
 }
 
 class SvgMathSpace {
-  #svgElement;
-  #magnification;
+  #groupElement;
 
-  constructor(widthInPixels, widthInSpaceUnits) {
-    this.#magnification = 100 / widthInSpaceUnits;
-
-    this.#svgElement = createSvgElement("svg");
-    this.#svgElement.setAttribute("viewBox", "-100 -100 200 200");
-    this.#svgElement.setAttribute("width", widthInPixels);
-    this.#svgElement.setAttribute("height", widthInPixels);
-    this.#svgElement.setAttribute("style", "border-style: solid; border-width: 1px;");
-    document.body.appendChild(this.#svgElement);
+  constructor(widthInPixels, nrOfUnits) {
+    const svgElement = createSvgElement("svg");
+    svgElement.setAttribute("viewBox", [0, -nrOfUnits, nrOfUnits, nrOfUnits].join(" "));
+    svgElement.setAttribute("width", widthInPixels);
+    svgElement.setAttribute("height", widthInPixels);
+    svgElement.setAttribute("style", "border-style: solid; border-width: 1px;");
+    svgElement.setAttribute("transform", "scale(0 -1)");
+    document.body.appendChild(svgElement);
 
     const defsElement = createSvgElement("defs");
-    this.#svgElement.appendChild(defsElement);
+    svgElement.appendChild(defsElement);
 
     const markerElement = createSvgElement("marker");
     markerElement.setAttribute("id", "arrowHead");
@@ -39,18 +37,36 @@ class SvgMathSpace {
     markerElement.setAttribute("markerWidth", 10); // 10 times the stroke width
     markerElement.setAttribute("markerHeight", 10); // 10 times the stroke width
     markerElement.setAttribute("orient", "auto");
+    markerElement.setAttribute("refX", "10");
     markerElement.setAttribute("overflow", "visible");
     defsElement.appendChild(markerElement);
 
     const arrowHeadElement = createSvgElement("path");
-    arrowHeadElement.setAttribute(
-      "d",
-      "M 0,-5 L 10,0 L 0,5 L 5,0.5 L 0,0.5 L 0,-0.5 L 5,-0.5 Z"
-    );
-    arrowHeadElement.setAttribute("style", "fill: black");
+
+    const pathBuilder = new PathBuilder();
+    pathBuilder.addMoveCommand([0, -5]);
+    pathBuilder.addLineCommand([10, -0.5]);
+    pathBuilder.addLineCommand([10, 0.5]);
+    pathBuilder.addLineCommand([0, 5]);
+    pathBuilder.addLineCommand([5, 0.5]);
+    pathBuilder.addLineCommand([0, 0.5]);
+    pathBuilder.addLineCommand([0, -0.5]);
+    pathBuilder.addLineCommand([5, -0.5]);
+    arrowHeadElement.setAttribute("d",pathBuilder.build());
+    arrowHeadElement.setAttribute("style", "fill: black; stroke-width: 1%;");
     markerElement.appendChild(arrowHeadElement);
 
-    this.#drawAxes();
+    this.#groupElement = createSvgElement("g");
+    svgElement.appendChild(this.#groupElement);
+
+    // this.#drawAxes();
+  }
+
+  drawCircle(radius) {
+    const circleElement = createSvgElement("circle");
+    circleElement.setAttribute("r", radius);
+    circleElement.setAttribute("style", "fill: transparent; stroke: black; stroke-width: 0.3%;");
+    this.#groupElement.appendChild(circleElement);
   }
 
   drawVector(origin, vector, showLength) {
@@ -58,71 +74,57 @@ class SvgMathSpace {
     pElement.setAttribute("d", "M " + this.#toSvg(origin) + " L " + this.#toSvg(vector));
     pElement.setAttribute(
       "style",
-      "fill: transparent; stroke: black; marker-end: url(#arrowHead);"
+      "fill: transparent; stroke: black; stroke-width: 0.3%; marker-end: url(#arrowHead);"
     );
     pElement.setAttribute("marker-end", "url(#arrowHead)");
-    this.#svgElement.appendChild(pElement);
+    this.#groupElement.appendChild(pElement);
   
     if (showLength) {
       const curlyBracesElement = createSvgElement("text");
       const angleOfBracesText = 90; // angle of text "}"
       const rotationAngle = (vector.angle() * 360) / (Math.PI * 2);
-      const x = this.#magnification * (origin.x + vector.x / 2);
-      const y = this.#magnification * -(origin.y + vector.y / 2);
+      const x = origin.x + vector.x / 2;
+      const y = origin.y + vector.y / 2;
       curlyBracesElement.setAttribute("x", x);
       curlyBracesElement.setAttribute("y", y);
       curlyBracesElement.setAttribute(
         "transform",
         "scale(" +
-        (this.#magnification * vector.length()) / 10 +
+        vector.length() / 10 +
         ") rotate(" +
         rotationAngle +
         ")"
       );
       curlyBracesElement.setAttribute("transform-origin", x + " " + y);
       curlyBracesElement.innerHTML = "}";
-      this.#svgElement.appendChild(curlyBracesElement);
+      this.#groupElement.appendChild(curlyBracesElement);
     }
   }
   
   #toSvg(vector) {
-    return this.#magnification * vector.x + "," + -(this.#magnification * vector.y);
+    return vector.x + "," + vector.y;
   }
 
   #drawAxes() {
-    const xAxisElement = createSvgElement("path");
-    xAxisElement.setAttribute("d", "M 0 0 h " + this.#magnification * 1.5);
-    xAxisElement.setAttribute(
-      "style",
-      "fill: transparent; stroke: black; marker-end: url(#arrowHead);"
-    );
-    this.#svgElement.appendChild(xAxisElement);
     const xAxisLabelElement = createSvgElement("text");
     xAxisLabelElement.setAttribute("x", 0);
-    xAxisLabelElement.setAttribute("y", -175);
+    xAxisLabelElement.setAttribute("y", -1.1);
     xAxisLabelElement.innerHTML = "x";
     xAxisLabelElement.setAttribute(
       "style",
       "dominant-baseline: middle; text-anchor: middle;"
     );
-    this.#svgElement.appendChild(xAxisLabelElement);
+    this.#groupElement.appendChild(xAxisLabelElement);
   
-    const yAxisElement = createSvgElement("path");
-    yAxisElement.setAttribute("d", "M 0 0 v " + -this.#magnification * 1.5);
-    yAxisElement.setAttribute(
-      "style",
-      "fill: transparent; stroke: black; marker-end: url(#arrowHead);"
-    );
-    this.#svgElement.appendChild(yAxisElement);
     const yAxisLabelElement = createSvgElement("text");
-    yAxisLabelElement.setAttribute("x", 175);
+    yAxisLabelElement.setAttribute("x", 1.1);
     yAxisLabelElement.setAttribute("y", 0);
     yAxisLabelElement.innerHTML = "y";
     yAxisLabelElement.setAttribute(
       "style",
       "dominant-baseline: middle; text-anchor: middle;"
     );
-    this.#svgElement.appendChild(yAxisLabelElement);
+    this.#groupElement.appendChild(yAxisLabelElement);
   }  
 }
 
