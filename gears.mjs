@@ -1,36 +1,8 @@
-const svgNamespace = "http://www.w3.org/2000/svg";
+import {PathBuilder, createSvgElement} from "./svg.mjs";
 
 const pressureAngle = 20; // in degrees
 
 const innerGearThicknessPercentage = 7;
-
-class PathBuilder {
-    #pathCommands = [];
-
-    #addCommand(letter, parameters) {
-        this.#pathCommands.push(letter + " " + parameters.join(" "));
-    }
-
-    #formatCoordinates(x, y) {
-        return x + "," + y;
-    }
-    
-    addMoveCommand(position) {
-        this.#addCommand("M", [this.#formatCoordinates(position[0], position[1])]);
-    }
-
-    addLineCommand(position) {
-        this.#addCommand("L", [this.#formatCoordinates(position[0], position[1])]);
-    }
-
-    addArcCommand(rx, ry, xAxisRotation, largeArcFlag, sweepFlag, position) {
-        this.#addCommand("A", [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, this.#formatCoordinates(position[0], position[1])]);
-    }
-
-    build() {
-        return this.#pathCommands.join(" ");
-    }
-}
 
 function getInvoluteCoordinates(radius, involuteAngle, offsetAngle, reversed) {
     if (reversed) {
@@ -75,7 +47,7 @@ function drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpac
     const pitchDiameter = nrOfTeeth * module;
     const pitchRadius = pitchDiameter / 2;
 
-    let svgElement = document.createElementNS(svgNamespace, "svg");
+    let svgElement = createSvgElement("svg");
     svgElement.setAttribute("width", pitchRadius * 2);
     svgElement.setAttribute("height", pitchRadius * 2);
     svgElement.setAttribute("x", centerX - pitchRadius);
@@ -123,7 +95,7 @@ function drawGear(nrOfTeeth, module, centerX, centerY, startAngle, startWithSpac
     }
 
     let involuteAngle;
-    let pathElement = document.createElementNS(svgNamespace, "path");
+    let pathElement = createSvgElement("path");
 
     const pathBuilder = new PathBuilder();
     pathBuilder.addMoveCommand(rotate([rootRadius, 0], angle));

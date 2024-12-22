@@ -1,14 +1,13 @@
 import {createGear, createInnerGear} from "./gears.mjs";
-
-const svgNamespace = "http://www.w3.org/2000/svg";
+import {createSvgElement} from "./svg.mjs";
 
 function createRotatingGear(gearElement, centerX, centerY, rpm) {
-    const groupElement = document.createElementNS(svgNamespace, "g");
+    const groupElement = createSvgElement("g");
     groupElement.setAttribute("transform-origin", centerX + " " + centerY);
 
     groupElement.appendChild(gearElement);
 
-    const animationElement = document.createElementNS(svgNamespace, "animateTransform");
+    const animationElement = createSvgElement("animateTransform");
     animationElement.setAttribute("attributeName", "transform");
     animationElement.setAttribute("type", "rotate");
     animationElement.setAttribute("begin", "0");
