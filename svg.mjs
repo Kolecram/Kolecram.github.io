@@ -23,6 +23,10 @@ class PathBuilder {
         this.#addCommand("L", [this.#formatCoordinates(position[0], position[1])]);
     }
 
+    addDeltaLineCommand(position) {
+        this.#addCommand("l", [this.#formatCoordinates(position[0], position[1])]);
+    }
+
     addArcCommand(rx, ry, xAxisRotation, largeArcFlag, sweepFlag, position) {
         this.#addCommand("A", [rx, ry, xAxisRotation, largeArcFlag, sweepFlag, this.#formatCoordinates(position[0], position[1])]);
     }

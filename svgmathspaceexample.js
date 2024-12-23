@@ -1,11 +1,14 @@
-import {SvgMathSpace, Vector} from "./svgmathspace.mjs";
+import { Vector2D } from "./geometry.mjs";
+import { SvgMathSpace } from "./svgmathspace.mjs";
+import { createSvgElement, PathBuilder } from "./svg.mjs";
 
 window.onload = (event) => {
-    const space = new SvgMathSpace(400, 1);
+    const strokeWidth = 0.005;
+    const space = new SvgMathSpace(1.2, 1.2, 400, strokeWidth);
 
     const angle = Math.PI / 3;
-    const p = new Vector(Math.cos(angle), Math.sin(angle));
-    space.drawVector(new Vector(0, 0), p, false);
+    const p = new Vector2D(Math.cos(angle), Math.sin(angle));
+    space.drawVector(new Vector2D(0, 0), p, false);
 
     // qElement.setAttribute("d", "M " + p.toSvg() + " L " + q.toSvg());
     // qElement.setAttribute("style", "fill: transparent; stroke: black;");
@@ -17,15 +20,6 @@ window.onload = (event) => {
     // alphaElement.innerHTML = "&alpha;";
     // svgElement.appendChild(alphaElement);
 
-    // const involuteElement = document.createElementNS(svgNamespace, "path");
-    // let path = "M " + magnification + ",0";
-    // for (let alpha = 0; alpha < Math.PI; alpha += Math.PI / 40) {
-    //     path += " L " + involute(alpha).toSvg();
-    // }
-    // involuteElement.setAttribute("d", path);
-    // involuteElement.setAttribute("style", "fill: transparent; stroke: black;");
-    // svgElement.appendChild(involuteElement);
-
-    space.drawVector(new Vector(0, 0), new Vector(0.95, -0.94), false);
-    space.drawCircle(1);
+    space.drawVector(new Vector2D(0, 0), new Vector2D(0.95, 0.94), false);
+    space.drawCircle(new Vector2D(0, 0), 1);
 }

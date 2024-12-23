@@ -1,31 +1,18 @@
 import { createSvgElement, PathBuilder } from "./svg.mjs";
 
-class Vector {
-  x;
-  y;
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-  }
-  length() {
-    return Math.sqrt(this.x ** 2 + this.y ** 2);
-  }
-  angle() {
-    // returns angle alpha in radians, where -Math.PI < alpha <= Math.PI
-    return Math.atan2(this.y, this.x);
-  }
-}
+const strokeWidth = "0.01";
 
 class SvgMathSpace {
   #groupElement;
+  #strokeWidth;
 
-  constructor(widthInPixels, nrOfUnits) {
+  constructor(nrOfUnitsHorizontal, nrOfUnitsVertical, pixelsPerUnit, strokeWidth) {
+    this.#strokeWidth = strokeWidth;
+
     const svgElement = createSvgElement("svg");
-    svgElement.setAttribute("viewBox", [0, -nrOfUnits, nrOfUnits, nrOfUnits].join(" "));
-    svgElement.setAttribute("width", widthInPixels);
-    svgElement.setAttribute("height", widthInPixels);
+    svgElement.setAttribute("width", nrOfUnitsHorizontal * pixelsPerUnit);
+    svgElement.setAttribute("height", nrOfUnitsVertical * pixelsPerUnit);
     svgElement.setAttribute("style", "border-style: solid; border-width: 1px;");
-    svgElement.setAttribute("transform", "scale(0 -1)");
     document.body.appendChild(svgElement);
 
     const defsElement = createSvgElement("defs");
@@ -52,33 +39,38 @@ class SvgMathSpace {
     pathBuilder.addLineCommand([0, 0.5]);
     pathBuilder.addLineCommand([0, -0.5]);
     pathBuilder.addLineCommand([5, -0.5]);
-    arrowHeadElement.setAttribute("d",pathBuilder.build());
-    arrowHeadElement.setAttribute("style", "fill: black; stroke-width: 1%;");
+    arrowHeadElement.setAttribute("d", pathBuilder.build());
+    arrowHeadElement.setAttribute("style", "fill: black; stroke-width: " + this.#strokeWidth);
     markerElement.appendChild(arrowHeadElement);
 
     this.#groupElement = createSvgElement("g");
+    const scale = [pixelsPerUnit, -pixelsPerUnit];
+    const translate = [0, -nrOfUnitsVertical];
+    this.#groupElement.setAttribute("transform", "scale(" + scale.join(" ") + ") translate(" + translate.join(" ") + ")");
     svgElement.appendChild(this.#groupElement);
 
     // this.#drawAxes();
   }
 
-  drawCircle(radius) {
+  drawCircle(origin, radius) {
     const circleElement = createSvgElement("circle");
     circleElement.setAttribute("r", radius);
-    circleElement.setAttribute("style", "fill: transparent; stroke: black; stroke-width: 0.3%;");
+    circleElement.setAttribute("cx", origin.x);
+    circleElement.setAttribute("cy", origin.y);
+    circleElement.setAttribute("style", "fill: transparent; stroke: black; stroke-width: " + this.#strokeWidth);
     this.#groupElement.appendChild(circleElement);
   }
 
   drawVector(origin, vector, showLength) {
     const pElement = createSvgElement("path");
-    pElement.setAttribute("d", "M " + this.#toSvg(origin) + " L " + this.#toSvg(vector));
+    pElement.setAttribute("d", "M " + this.#toSvg(origin) + " l " + this.#toSvg(vector));
     pElement.setAttribute(
       "style",
-      "fill: transparent; stroke: black; stroke-width: 0.3%; marker-end: url(#arrowHead);"
+      "fill: transparent; stroke: black; stroke-width: " + this.#strokeWidth + "; marker-end: url(#arrowHead);"
     );
     pElement.setAttribute("marker-end", "url(#arrowHead)");
     this.#groupElement.appendChild(pElement);
-  
+
     if (showLength) {
       const curlyBracesElement = createSvgElement("text");
       const angleOfBracesText = 90; // angle of text "}"
@@ -100,7 +92,7 @@ class SvgMathSpace {
       this.#groupElement.appendChild(curlyBracesElement);
     }
   }
-  
+
   #toSvg(vector) {
     return vector.x + "," + vector.y;
   }
@@ -115,7 +107,7 @@ class SvgMathSpace {
       "dominant-baseline: middle; text-anchor: middle;"
     );
     this.#groupElement.appendChild(xAxisLabelElement);
-  
+
     const yAxisLabelElement = createSvgElement("text");
     yAxisLabelElement.setAttribute("x", 1.1);
     yAxisLabelElement.setAttribute("y", 0);
@@ -125,7 +117,11 @@ class SvgMathSpace {
       "dominant-baseline: middle; text-anchor: middle;"
     );
     this.#groupElement.appendChild(yAxisLabelElement);
-  }  
+  }
+
+  appendChild(childElement) {
+    this.#groupElement.appendChild(childElement);
+  }
 }
 
-export {SvgMathSpace, Vector};
+export { SvgMathSpace };
