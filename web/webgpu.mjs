@@ -7,7 +7,7 @@ if (!adapter) {
 }
 const device = await adapter.requestDevice();
 
-const shaderCode = await fetch("shader.wgsl").then(r => r.text());
+const shaderCode = await fetch("webgpushader.wgsl").then(r => r.text());
 
 function drawImageOnCanvas() {
     const canvas = document.querySelector("canvas");
