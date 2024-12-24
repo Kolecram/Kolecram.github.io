@@ -48,6 +48,9 @@ function tekenInvoluutSvg() {
     const t = p.plus(pt);
     space.drawPoint("T", t, "top");
     space.drawLineSegment(p, t);
+
+    space.drawLineSegment(t, q);
+    space.drawAngle(p, pq, pt, "&alpha;");
 }
 
 window.onload = (event) => {
